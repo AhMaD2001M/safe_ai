@@ -1,0 +1,105 @@
+{% extends 'base.html' %} {% block content %}
+<div class="bg-blue-600 text-white text-center py-4">
+  <h2 class="text-2xl font-semibold">Safe AI</h2>
+  <p class="text-lg">Room Code : {{code}}</p>
+</div>
+
+<div
+  id="messages"
+  class="bg-gray-100 p-4 overflow-y-auto mb-24"
+  style="height: calc(100vh - 350px)"
+></div>
+
+<div class="bg-white p-4 border-t border-gray-300 fixed bottom-0 left-0 w-full">
+  <form onsubmit="sendMessage(); return false;" class="flex w-full">
+    <input
+      type="text"
+      id="message"
+      name="message"
+      placeholder="Type a message..."
+      class="flex-grow p-3 border border-gray-300 rounded-lg mr-4 shadow-sm"
+    />
+    <button
+      type="submit"
+      id="send-btn"
+      class="bg-blue-600 text-white px-6 py-3 rounded-lg transition transform hover:scale-105"
+    >
+      Send
+    </button>
+  </form>
+
+  <!-- Add checkboxes for message checks -->
+  <div class="message-checks flex space-x-4 mt-4">
+    <label
+      ><input type="checkbox" id="check-abuse" class="mr-2" /> Check for
+      Abuse</label
+    >
+    <label
+      ><input type="checkbox" id="check-racism" class="mr-2" /> Check for
+      Racism</label
+    >
+    <label
+      ><input type="checkbox" id="check-sexual-content" class="mr-2" /> Check
+      for Sexual Content</label
+    >
+    <label
+      ><input type="checkbox" id="check-offensive" class="mr-2" /> Check for
+      Offensive Language</label
+    >
+    <label
+      ><input type="checkbox" id="check-spam" class="mr-2" /> Check for
+      Spam</label
+    >
+    <label
+      ><input type="checkbox" id="check-personal-sensitive" class="mr-2" />
+      Check for Personal or Sensitive Content</label
+    >
+  </div>
+</div>
+
+<script type="text/javascript">
+  var socketio = io();
+
+  const messages = document.getElementById("messages");
+
+  const createMessage = (name, msg) => {
+    const content = `
+    <div class="bg-white p-3 rounded-lg mb-4 shadow-sm">
+        <span class="block font-bold text-gray-700">${name}</span>
+        <span class="block text-gray-500">${msg}</span>
+        <span class="text-xs text-gray-400">${new Date().toLocaleString()}</span>
+    </div>
+    `;
+    messages.innerHTML += content;
+    messages.scrollTop = messages.scrollHeight;
+  };
+
+  socketio.on("message", (data) => {
+    createMessage(data.name, data.message);
+  });
+
+  const sendMessage = () => {
+    const message = document.getElementById("message");
+    if (message.value === "") return;
+
+    const checks = [];
+    if (document.getElementById("check-abuse").checked) checks.push("abuse");
+    if (document.getElementById("check-racism").checked) checks.push("racism");
+    if (document.getElementById("check-sexual-content").checked)
+      checks.push("sexual content");
+    if (document.getElementById("check-offensive").checked)
+      checks.push("offensive language");
+    if (document.getElementById("check-spam").checked) checks.push("spam");
+    if (document.getElementById("check-personal-sensitive").checked)
+      checks.push("personal or sensitive content");
+
+    socketio.emit("message", { data: message.value, checks: checks });
+    message.value = "";
+  };
+</script>
+
+{% for msg in messages %}
+<script type="text/javascript">
+  createMessage("{{msg.name}}", "{{msg.message}}");
+</script>
+{% endfor %} {% endblock %}
